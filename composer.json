@@ -1,0 +1,14 @@
+{
+    "name": "namelesscoder/asynchronous-reference-indexing",
+    "type": "typo3-cms-extension",
+    "license": "GPL-2.0+",
+    "preferred-install": "dist",
+    "require": {
+        "typo3/cms": "^7.6|^8.0"
+    },
+    "autoload": {
+        "psr-4": {
+            "NamelessCoder\\AsynchronousReferenceIndexing\\": "Classes/"
+        }
+    }
+}
