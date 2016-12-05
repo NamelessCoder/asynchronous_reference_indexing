@@ -43,7 +43,7 @@ class ReferenceIndexCommandController extends CommandController
 
         if (!$count) {
             $this->response->setContent('No reference indexing tasks queued - nothing to do.' . PHP_EOL);
-            $this->sendAndExit();
+            return;
         }
 
         $this->lock();
@@ -81,7 +81,6 @@ class ReferenceIndexCommandController extends CommandController
         } catch (\Exception $error) {
             $this->response->appendContent('ERROR! ' . $error->getMessage() . ' (' . $error->getCode() . ')' . PHP_EOL);
             $this->unlock();
-            $this->sendAndExit(1);
         }
     }
 
