@@ -1,8 +1,7 @@
 <?php
 namespace NamelessCoder\AsyncReferenceIndexing\Command;
 
-use NamelessCoder\AsyncReferenceIndexing\DataHandling\DataHandler;
-use NamelessCoder\AsyncReferenceIndexing\Traits\DatabaseAwareTrait;
+use NamelessCoder\AsyncReferenceIndexing\Traits\ReferenceIndexQueueAware;
 use TYPO3\CMS\Backend\Utility\BackendUtility;
 use TYPO3\CMS\Core\Database\ReferenceIndex;
 use TYPO3\CMS\Core\Utility\GeneralUtility;
@@ -17,7 +16,7 @@ use TYPO3\CMS\Extbase\Mvc\Controller\CommandController;
  */
 class ReferenceIndexCommandController extends CommandController
 {
-    use DatabaseAwareTrait;
+    use ReferenceIndexQueueAware;
 
     const LEGACY_LOCKFILE = 'typo3temp/reference-indexing-running.lock';
     const LOCKFILE = 'typo3temp/var/reference-indexing-running.lock';
@@ -39,7 +38,7 @@ class ReferenceIndexCommandController extends CommandController
             return;
         }
 
-        $count = $this->performCount(DataHandler::QUEUE_TABLE);
+        $count = $this->performCount('tx_asyncreferenceindexing_queue');
 
         if (!$count) {
             $this->response->setContent('No reference indexing tasks queued - nothing to do.' . PHP_EOL);
@@ -57,7 +56,11 @@ class ReferenceIndexCommandController extends CommandController
         // removing the lock file. Any error causes processing to stop completely.
         try {
 
-            foreach ($this->getRowsWithGenerator(DataHandler::QUEUE_TABLE) as $queueItem) {
+            // Force the reference index override to disable capturing. Will apply to *all* instances
+            // of ReferenceIndex (but of course only when the override gets loaded).
+            \NamelessCoder\AsyncReferenceIndexing\Database\ReferenceIndex::captureReferenceIndex(false);
+
+            foreach ($this->getRowsWithGenerator('tx_asyncreferenceindexing_queue') as $queueItem) {
 
                 /** @var $referenceIndex ReferenceIndex */
                 $referenceIndex = GeneralUtility::makeInstance(ReferenceIndex::class);
@@ -66,7 +69,7 @@ class ReferenceIndexCommandController extends CommandController
                 }
                 $referenceIndex->updateRefIndexTable($queueItem['reference_table'], $queueItem['reference_uid']);
                 $this->performDeletion(
-                    DataHandler::QUEUE_TABLE,
+                    'tx_asyncreferenceindexing_queue',
                     sprintf(
                         'reference_table = \'%s\' AND reference_uid = %d AND reference_workspace = %d',
                         (string) $queueItem['reference_table'],
@@ -78,9 +81,12 @@ class ReferenceIndexCommandController extends CommandController
             }
             $this->response->appendContent('Reference indexing complete!' . PHP_EOL);
             $this->unlock();
+
         } catch (\Exception $error) {
+
             $this->response->appendContent('ERROR! ' . $error->getMessage() . ' (' . $error->getCode() . ')' . PHP_EOL);
             $this->unlock();
+
         }
     }
 

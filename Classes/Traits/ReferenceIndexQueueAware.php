@@ -1,20 +1,89 @@
 <?php
 namespace NamelessCoder\AsyncReferenceIndexing\Traits;
 
+use TYPO3\CMS\Backend\Utility\BackendUtility;
 use TYPO3\CMS\Core\Database\ConnectionPool;
 use TYPO3\CMS\Core\Database\DatabaseConnection;
 use TYPO3\CMS\Core\Database\Query\QueryBuilder;
 use TYPO3\CMS\Core\Utility\GeneralUtility;
 
 /**
- * Database Aware
+ * Reference Index Queue Aware
+ *
+ * Contains methods necessary to maintain and interact with the
+ * reference indexing queue.
  *
  * Provides methods to classes which perform database operations,
  * making it possible to consume them using the same API on both
  * TYPO3 7.6 LTS and 8.5+.
  */
-trait DatabaseAwareTrait
+trait ReferenceIndexQueueAware
 {
+    /**
+     * Storage for queued items.
+     *
+     * @var array
+     */
+    protected static $queuedReferenceItems = [];
+
+    /**
+     * Array of class names being captured. Invoking $class::captureReferenceIndex()
+     * with true or false as argument sets the behavior. Defaults to true,
+     * e.g. will by default capture in any class. This allows outside
+     * callers to toggle the interception of each class.
+     *
+     * @var boolean[]
+     */
+    protected static $capturing = [];
+
+    /**
+     * @param boolean $capture
+     */
+    public static function captureReferenceIndex($capture)
+    {
+        static::$capturing[static::class] = $capture;
+    }
+
+    /**
+     * Returns true only if this particular class is captured.
+     *
+     * @return boolean
+     */
+    protected function isCaptured()
+    {
+        return !isset(static::$capturing[static::class]) || (boolean) static::$capturing[static::class];
+    }
+
+    /**
+     * Overridden implementation of reference indexing trigger method.
+     *
+     * This function gets called from multiple places when DataHandler
+     * or other classes have performed database operations on any given
+     * record. The override prevents the normal reference indexing and
+     * instead stores the table+uid combination into a queue (which
+     * prevents storing duplicates).
+     *
+     * @param string $table
+     * @param integer $id
+     * @param integer $workspace
+     * @return void
+     */
+    protected function addReferenceIndexItemToQueue($table, $id, $workspace = 0)
+    {
+        if (
+            $workspace === 0
+            && BackendUtility::isTableWorkspaceEnabled($table)
+            && isset($GLOBALS['BE_USER'])
+            && $GLOBALS['BE_USER']->workspace > 0
+        ) {
+            $workspace = $GLOBALS['BE_USER']->workspace;
+        }
+        static::$queuedReferenceItems[$table . ':' . $id . ':' . $workspace] = [
+            'reference_table' => $table,
+            'reference_uid' => $id,
+            'reference_workspace' => $workspace
+        ];
+    }
 
     /**
      * @oaram string $table
@@ -113,6 +182,42 @@ trait DatabaseAwareTrait
     private function getLegacyDatabaseConnection()
     {
         return $GLOBALS['TYPO3_DB'];
+    }
+
+    /**
+     * Lifecycle end - store queued updates into the queue table.
+     *
+     * @return void
+     */
+    public function __destruct()
+    {
+        if (empty(static::$queuedReferenceItems)) {
+            return;
+        }
+
+        $quotedImplodedKeys = implode(
+            '\', \'',
+            array_keys(static::$queuedReferenceItems)
+        );
+
+        // remove *ALL* duplicates from queue
+        $this->performDeletion(
+            'tx_asyncreferenceindexing_queue',
+            'CONCAT(reference_table, \':\', reference_uid, \':\', reference_workspace) IN (\'' . $quotedImplodedKeys . '\')'
+        );
+
+        // insert *ALL* queued items in bulk
+        $this->performMultipleInsert(
+            'tx_asyncreferenceindexing_queue',
+            [
+                'reference_table',
+                'reference_uid',
+                'reference_workspace'
+            ],
+            static::$queuedReferenceItems
+        );
+
+        static::$queuedReferenceItems = [];
     }
 
 }
