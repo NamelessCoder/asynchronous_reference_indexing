@@ -6,10 +6,12 @@ Asynchronous Reference Indexing for TYPO3
 What does it do?
 ----------------
 
-Provides three things:
+Provides a couple of things:
 
 * An override class for DataHandler which replaces a single method, `updateRefIndex`, causing
   on-the-fly indexing to be skipped, instead delegating to a queue.
+* A similar override for the ReferenceIndex class which replaces methods called also outside
+  of DataHandler, to catch those cases.
 * An SQL table storing queued reference index updates.
 * A CommandController which can be executed via CLI to process queued reference indexing
   without running into timeout or long wait issues.
