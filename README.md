@@ -44,6 +44,13 @@ in frontend and backend. You are advised to add a scheduler task or cronjob for 
 command controller *and set the frequency to a very low value such as once every minute*. The
 controller maintains a lock file and prevents parallel executions, so frequent runs are safe.
 
+Note that this extension consistently captures all of the current reference indexing, including
+that which you can trigger using the existing (non-Extbase) CLI command or via the "DB check"
+backend module which is added when you install the `lowlevel` system extension. Using either of
+these methods to force reference index updating will instead fill the queue for the command
+controller included with *this* extension so that all existing records which have relations
+will be processed on the next run.
+
 Possible side effects
 ---------------------
 
