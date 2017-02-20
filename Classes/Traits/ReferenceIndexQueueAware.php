@@ -86,15 +86,16 @@ trait ReferenceIndexQueueAware
     }
 
     /**
-     * @oaram string $table
-     * @return integer
+     * @param $table
+     * @param string $where
+     * @return int
      */
-    protected function performCount($table)
+    protected function performCount($table, $where = '1==1')
     {
         if ($this->isLegacyDatabaseConnection()) {
-            return $this->getLegacyDatabaseConnection()->exec_SELECTcountRows('*', $table);
+            return $this->getLegacyDatabaseConnection()->exec_SELECTcountRows('*', $table, $where);
         }
-        return $this->getDoctrineConnectionPool()->getConnectionForTable($table)->query('SELECT reference_uid FROM ' . $table)->rowCount();
+        return $this->getDoctrineConnectionPool()->getConnectionForTable($table)->query('SELECT reference_uid FROM ' . $table . ' WHERE ' . $where)->rowCount();
     }
 
     /**
@@ -195,27 +196,34 @@ trait ReferenceIndexQueueAware
             return;
         }
 
-        $quotedImplodedKeys = implode(
-            '\', \'',
-            array_keys(static::$queuedReferenceItems)
-        );
+        // Loop through items and check if entry already exists in $queuedReferenceItems
+        foreach (static::$queuedReferenceItems as $key => $item) {
+            $where = sprintf(
+                'reference_table = \'%s\' AND reference_uid = %d AND reference_workspace = %d',
+                (string)$item['reference_table'],
+                (integer)$item['reference_uid'],
+                (integer)$item['reference_workspace']
+            );
 
-        // remove *ALL* duplicates from queue
-        $this->performDeletion(
-            'tx_asyncreferenceindexing_queue',
-            'CONCAT(reference_table, \':\', reference_uid, \':\', reference_workspace) IN (\'' . $quotedImplodedKeys . '\')'
-        );
+            // If entry is already in DB - remove it from $queuedReferenceItems
+            if ($this->performCount('tx_asyncreferenceindexing_queue', $where) > 0) {
+                unset(static::$queuedReferenceItems[$key]);
+            }
+        }
 
-        // insert *ALL* queued items in bulk
-        $this->performMultipleInsert(
-            'tx_asyncreferenceindexing_queue',
-            [
-                'reference_table',
-                'reference_uid',
-                'reference_workspace'
-            ],
-            static::$queuedReferenceItems
-        );
+        // It might occur that the loop above has removed all element so check before
+        // bulk insert is performed
+        if (!empty(static::$queuedReferenceItems)) {
+            $this->performMultipleInsert(
+                'tx_asyncreferenceindexing_queue',
+                [
+                    'reference_table',
+                    'reference_uid',
+                    'reference_workspace'
+                ],
+                static::$queuedReferenceItems
+            );
+        }
 
         static::$queuedReferenceItems = [];
     }

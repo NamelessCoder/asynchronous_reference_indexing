@@ -8,5 +8,6 @@ CREATE TABLE tx_asyncreferenceindexing_queue (
 
   INDEX reference_table (reference_table),
   INDEX reference_uid (reference_uid),
-  INDEX reference_workspace (reference_workspace)
+  INDEX reference_workspace (reference_workspace),
+  INDEX reference_cleanup (reference_table, reference_uid, reference_workspace)
 );
