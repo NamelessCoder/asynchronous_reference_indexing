@@ -15,6 +15,7 @@ Provides a couple of things:
 * An SQL table storing queued reference index updates.
 * A CommandController which can be executed via CLI to process queued reference indexing
   without running into timeout or long wait issues.
+* Provides option to exclude tables from reference indexing (only on TYPO3 8.6+). See extension configuration.
   
 Depending on how often your editors perform record imports, copies, deletions etc. this can over
 time save many, many hours of waiting for the TYPO3 backend to respond.

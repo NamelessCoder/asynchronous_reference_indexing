@@ -1,0 +1,2 @@
+# cat=basic; type=string; label=Exclude tables from Reference Indexer via slot shouldExcludeTableFromReferenceIndex -  only works in TYPO3 8.6+
+excludeTablesFromReferenceIndexing = fe_users, fe_groups
