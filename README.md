@@ -62,6 +62,29 @@ updated only when the command controller runs.
 
 Frontend rendering should not be affected negatively.
 
+Usage
+-----
+
+To re-index a site from scratch you would normally execute the following two commands:
+
+```
+./typo3/sysext/core/bin/typo3 referenceindex:update
+```
+
+```
+./typo3/cli_dispatch.phpsh extbase referenceindex:update
+```
+
+The first one would fill the sys_refindex_async table with entries to index and executing
+the second command to would then update the entries in the TYPO3 table sys_refindex.
+
+If you however want to store the records directly in TYPO3 table sys_refindex you can
+do this by executing the original ref-indexer provided by TYPO3
+
+```
+./typo3/cli_dispatch.phpsh extbase referenceindex:update --force 1
+```
+
 Background
 ----------
 

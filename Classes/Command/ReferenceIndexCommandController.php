@@ -24,13 +24,36 @@ class ReferenceIndexCommandController extends CommandController
     /**
      * Update Reference Index
      *
+     * Updates the reference index - if providing the -f parameter the
+     * indexing will index directly to sys_refindex - else the
+     *
+     * @param boolean $force
+     * @param boolean $check
+     * @param boolean $silent
+     *
+     * @return void
+     */
+    public function updateCommand($force = false, $check = false, $silent = false) {
+        if ($force) {
+            \NamelessCoder\AsyncReferenceIndexing\Database\ReferenceIndex::captureReferenceIndex(false);
+            $refIndexObj = \TYPO3\CMS\Core\Utility\GeneralUtility::makeInstance(\TYPO3\CMS\Core\Database\ReferenceIndex::class);
+            $refIndexObj->updateIndex($check, !$silent);
+        }
+        else {
+            $this->updateReferenceIndex();
+        }
+    }
+
+    /**
+     * Update Reference Index
+     *
      * Updates the reference index by
      * processing the queue maintained by
      * the overridden DataHandler class.
      *
      * @return void
      */
-    public function updateCommand()
+    protected function updateReferenceIndex()
     {
         $lockFile = GeneralUtility::getFileAbsFileName(static::LOCKFILE);
         if (file_exists($lockFile)) {
