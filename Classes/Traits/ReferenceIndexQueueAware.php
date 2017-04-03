@@ -90,7 +90,7 @@ trait ReferenceIndexQueueAware
      * @param string $where
      * @return int
      */
-    protected function performCount($table, $where = '1==1')
+    protected function performCount($table, $where = '1=1')
     {
         if ($this->isLegacyDatabaseConnection()) {
             return $this->getLegacyDatabaseConnection()->exec_SELECTcountRows('*', $table, $where);
