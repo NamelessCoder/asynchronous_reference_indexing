@@ -34,7 +34,7 @@ composer require namelesscoder/asynchronous-reference-indexing
 Then enable the extension in TYPO3. This can be done with a CLI command:
 
 ```
-./typo3/cli_dispatch.phpsh extbase extension:install asynchronous_reference_indexing
+TYPO3_PATH_ROOT=$PWD/web vendor/bin/typo3 extensionmanager:extension:install asynchronous_reference_indexing
 ```
 
 Word of warning
@@ -70,13 +70,13 @@ To re-index a site from scratch you would normally execute the following command
 a lot of garbage in the sys_refindex table you might wan't to truncate it before:
 
 ```
-env TYPO3_PATH_ROOT=$PWD/web vendor/bin/typo3cms referenceindex:update --force 1
+TYPO3_PATH_ROOT=$PWD/web vendor/bin/typo3cms referenceindex:update --force 1
 ```
 
 Afterwards you can update the sys_refindex by executing the command:
 
 ```
-env TYPO3_PATH_ROOT=$PWD/web vendor/bin/typo3cms referenceindex:update
+TYPO3_PATH_ROOT=$PWD/web vendor/bin/typo3cms referenceindex:update
 ```
 
 Alternatively you can setup a Scheduler Task to execute the command at a certain interval.
