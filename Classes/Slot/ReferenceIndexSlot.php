@@ -9,7 +9,6 @@ use TYPO3\CMS\Core\Utility\GeneralUtility;
  */
 class ReferenceIndexSlot
 {
-
     /**
      * Exclude tables from ReferenceIndex which cannot contain a reference
      *

@@ -3,7 +3,6 @@ namespace NamelessCoder\AsyncReferenceIndexing\Traits;
 
 use TYPO3\CMS\Backend\Utility\BackendUtility;
 use TYPO3\CMS\Core\Database\ConnectionPool;
-use TYPO3\CMS\Core\Database\DatabaseConnection;
 use TYPO3\CMS\Core\Database\Query\QueryBuilder;
 use TYPO3\CMS\Core\Utility\GeneralUtility;
 
@@ -13,9 +12,7 @@ use TYPO3\CMS\Core\Utility\GeneralUtility;
  * Contains methods necessary to maintain and interact with the
  * reference indexing queue.
  *
- * Provides methods to classes which perform database operations,
- * making it possible to consume them using the same API on both
- * TYPO3 7.6 LTS and 8.5+.
+ * Provides methods to classes which perform database operations.
  */
 trait ReferenceIndexQueueAware
 {
@@ -92,9 +89,6 @@ trait ReferenceIndexQueueAware
      */
     protected function performCount($table, $where = '1=1')
     {
-        if ($this->isLegacyDatabaseConnection()) {
-            return $this->getLegacyDatabaseConnection()->exec_SELECTcountRows('*', $table, $where);
-        }
         return $this->getDoctrineConnectionPool()->getConnectionForTable($table)->query('SELECT reference_uid FROM ' . $table . ' WHERE ' . $where)->rowCount();
     }
 
@@ -105,9 +99,6 @@ trait ReferenceIndexQueueAware
      */
     protected function performDeletion($table, $where)
     {
-        if ($this->isLegacyDatabaseConnection()) {
-            return $this->getLegacyDatabaseConnection()->exec_DELETEquery($table, $where);
-        }
         return $this->getDoctrineConnectionPool()->getConnectionForTable($table)->exec(
             sprintf(
                 'DELETE FROM %s WHERE %s',
@@ -125,11 +116,7 @@ trait ReferenceIndexQueueAware
      */
     protected function performMultipleInsert($table, array $fields, array $records)
     {
-        if ($this->isLegacyDatabaseConnection()) {
-            $this->getLegacyDatabaseConnection()->exec_INSERTmultipleRows($table, $fields, array_values($records));
-        } else {
-            $this->getDoctrineConnectionPool()->getConnectionForTable($table)->bulkInsert($table, $records, $fields);
-        }
+        $this->getDoctrineConnectionPool()->getConnectionForTable($table)->bulkInsert($table, $records, $fields);
     }
 
     /**
@@ -138,26 +125,9 @@ trait ReferenceIndexQueueAware
      */
     protected function getRowsWithGenerator($table)
     {
-        if ($this->isLegacyDatabaseConnection()) {
-            $connection = $this->getLegacyDatabaseConnection();
-            $result = $connection->sql_query('SELECT * FROM ' . $table);
-            while ($row = $connection->sql_fetch_assoc($result)) {
-                yield $row;
-            }
-            $this->getLegacyDatabaseConnection()->sql_free_result($result);
-        } else {
-            foreach ($this->getQueryBuilderForTable($table)->select('*')->from($table)->execute() as $row) {
-                yield $row;
-            }
+        foreach ($this->getQueryBuilderForTable($table)->select('*')->from($table)->execute() as $row) {
+            yield $row;
         }
-    }
-
-    /**
-     * @return boolean
-     */
-    private function isLegacyDatabaseConnection()
-    {
-        return !class_exists(ConnectionPool::class);
     }
 
     /**
@@ -175,14 +145,6 @@ trait ReferenceIndexQueueAware
     private function getQueryBuilderForTable($table)
     {
         return $this->getDoctrineConnectionPool()->getQueryBuilderForTable($table);
-    }
-
-    /**
-     * @return DatabaseConnection
-     */
-    private function getLegacyDatabaseConnection()
-    {
-        return $GLOBALS['TYPO3_DB'];
     }
 
     /**

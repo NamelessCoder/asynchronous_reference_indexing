@@ -1,6 +1,7 @@
 <?php
 namespace NamelessCoder\AsyncReferenceIndexing\Command;
 
+use NamelessCoder\AsyncReferenceIndexing\Database\ReferenceIndex as AsyncReferenceIndex;
 use NamelessCoder\AsyncReferenceIndexing\Traits\ReferenceIndexQueueAware;
 use TYPO3\CMS\Backend\Utility\BackendUtility;
 use TYPO3\CMS\Core\Database\ReferenceIndex;
@@ -18,7 +19,6 @@ class ReferenceIndexCommandController extends CommandController
 {
     use ReferenceIndexQueueAware;
 
-    const LEGACY_LOCKFILE = 'typo3temp/reference-indexing-running.lock';
     const LOCKFILE = 'typo3temp/var/reference-indexing-running.lock';
 
     /**
@@ -35,8 +35,8 @@ class ReferenceIndexCommandController extends CommandController
      */
     public function updateCommand($force = false, $check = false, $silent = false) {
         if ($force) {
-            \NamelessCoder\AsyncReferenceIndexing\Database\ReferenceIndex::captureReferenceIndex(false);
-            $refIndexObj = \TYPO3\CMS\Core\Utility\GeneralUtility::makeInstance(\TYPO3\CMS\Core\Database\ReferenceIndex::class);
+            AsyncReferenceIndex::captureReferenceIndex(false);
+            $refIndexObj = GeneralUtility::makeInstance(ReferenceIndex::class);
             $refIndexObj->updateIndex($check, !$silent);
         }
         else {
@@ -81,7 +81,7 @@ class ReferenceIndexCommandController extends CommandController
 
             // Force the reference index override to disable capturing. Will apply to *all* instances
             // of ReferenceIndex (but of course only when the override gets loaded).
-            \NamelessCoder\AsyncReferenceIndexing\Database\ReferenceIndex::captureReferenceIndex(false);
+            AsyncReferenceIndex::captureReferenceIndex(false);
 
             foreach ($this->getRowsWithGenerator('tx_asyncreferenceindexing_queue') as $queueItem) {
 
@@ -118,11 +118,7 @@ class ReferenceIndexCommandController extends CommandController
      */
     protected function getLockFile()
     {
-        $candidate = GeneralUtility::getFileAbsFileName(static::LOCKFILE);
-        if (!is_dir(dirname($candidate))) {
-            $candidate = GeneralUtility::getFileAbsFileName(static::LEGACY_LOCKFILE);
-        }
-        return $candidate;
+        return GeneralUtility::getFileAbsFileName(static::LOCKFILE);
     }
 
     /**

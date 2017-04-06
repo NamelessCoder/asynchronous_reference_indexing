@@ -66,25 +66,21 @@ Frontend rendering should not be affected negatively.
 Usage
 -----
 
-To re-index a site from scratch you would normally execute the following two commands:
+To re-index a site from scratch you would normally execute the following command, if you have
+a lot of garbage in the sys_refindex table you might wan't to truncate it before:
 
 ```
-./typo3/sysext/core/bin/typo3 referenceindex:update
+env TYPO3_PATH_ROOT=$PWD/web vendor/bin/typo3cms referenceindex:update --force 1
 ```
 
-```
-./typo3/cli_dispatch.phpsh extbase referenceindex:update
-```
-
-The first one would fill the sys_refindex_async table with entries to index and executing
-the second command to would then update the entries in the TYPO3 table sys_refindex.
-
-If you however want to store the records directly in TYPO3 table sys_refindex you can
-do this by executing the original ref-indexer provided by TYPO3
+Afterwards you can update the sys_refindex by executing the command:
 
 ```
-./typo3/cli_dispatch.phpsh extbase referenceindex:update --force 1
+env TYPO3_PATH_ROOT=$PWD/web vendor/bin/typo3cms referenceindex:update
 ```
+
+Alternatively you can setup a Scheduler Task to execute the command at a certain interval.
+
 
 Background
 ----------
