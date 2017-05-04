@@ -116,7 +116,11 @@ trait ReferenceIndexQueueAware
      */
     protected function performMultipleInsert($table, array $fields, array $records)
     {
-        $this->getDoctrineConnectionPool()->getConnectionForTable($table)->bulkInsert($table, $records, $fields);
+        // Split records into chunks since bulkInsert will fail if insert into statement becomes too large
+        $recordChunks = array_chunk($records, 4096);
+        foreach ($recordChunks as $recordChunk) {
+            $this->getDoctrineConnectionPool()->getConnectionForTable($table)->bulkInsert($table, $recordChunk, $fields);
+        }
     }
 
     /**
