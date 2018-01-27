@@ -8,7 +8,7 @@ $GLOBALS['TYPO3_CONF_VARS']['SYS']['Objects'][\TYPO3\CMS\Core\Database\Reference
     \NamelessCoder\AsyncReferenceIndexing\Database\ReferenceIndex::class;
 
 $GLOBALS['TYPO3_CONF_VARS']['SC_OPTIONS']['extbase']['commandControllers'][] =
-    \NamelessCoder\AsyncReferenceIndexing\Command\ReferenceIndexCommandController::class;
+    \NamelessCoder\AsyncReferenceIndexing\Command\AsyncReferenceIndexCommandController::class;
 
 $_EXTCONF = unserialize($_EXTCONF);
 $GLOBALS['TYPO3_CONF_VARS']['EXTCONF'][$_EXTKEY] = $_EXTCONF;

@@ -70,13 +70,13 @@ To re-index a site from scratch you would normally execute the following command
 a lot of garbage in the sys_refindex table you might wan't to truncate it before:
 
 ```
-TYPO3_PATH_ROOT=$PWD/web vendor/bin/typo3cms referenceindex:update --force 1
+TYPO3_PATH_ROOT=$PWD/web vendor/bin/typo3cms asyncreferenceindex:update --force 1
 ```
 
 Afterwards you can update the sys_refindex by executing the command:
 
 ```
-TYPO3_PATH_ROOT=$PWD/web vendor/bin/typo3cms referenceindex:update
+TYPO3_PATH_ROOT=$PWD/web vendor/bin/typo3cms asyncreferenceindex:update
 ```
 
 Alternatively you can setup a Scheduler Task to execute the command at a certain interval.

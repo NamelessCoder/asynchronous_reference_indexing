@@ -9,13 +9,13 @@ use TYPO3\CMS\Core\Utility\GeneralUtility;
 use TYPO3\CMS\Extbase\Mvc\Controller\CommandController;
 
 /**
- * Reference Index Commands
+ * Async Reference Index Commands
  *
  * Commandline execution for reference index updating
  * based on the queue maintained by the DataHandler
  * override shipped with this extension.
  */
-class ReferenceIndexCommandController extends CommandController
+class AsyncReferenceIndexCommandController extends CommandController
 {
     use ReferenceIndexQueueAware;
 
