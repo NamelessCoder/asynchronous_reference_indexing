@@ -4,7 +4,7 @@
     "license": "GPL-2.0-or-later",
     "preferred-install": "dist",
     "require": {
-        "typo3/cms-backend": "^7.6|^8|^9"
+        "typo3/cms-backend": "^8|^9"
     },
     "autoload": {
         "psr-4": {
